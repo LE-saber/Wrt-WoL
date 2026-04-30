@@ -1,0 +1,65 @@
+feishu:
+  # 开启飞书长连接。已填写 app_id/app_secret 时也会自动启用。
+  enabled: true
+  # 飞书自建应用凭证（长连接模式只需 app_id + app_secret）
+  app_id: "cli_your_app_id"
+  app_secret: "your_app_secret"
+
+telegram:
+  # 通过 Telegram Bot API 长轮询接收 /on 命令
+  enabled: false
+  bot_token: "123456789:your_bot_token"
+  allowed_user_ids:
+    - "123456789"
+  allowed_chat_ids: []
+  proxy_url: ""
+  drop_pending_updates: true
+
+selfhost:
+  # 服务器端：部署在你自己的云服务器上，提供 Web 页面和中转 API
+  server:
+    enabled: false
+    host: "0.0.0.0"
+    port: 8080
+    admin_token: "change-this-admin-token"
+    device_token: "change-this-device-token"
+  # OpenWrt 客户端：主动轮询自建服务器，收到指令后发 WoL
+  client:
+    enabled: false
+    server_url: "https://wol.example.com"
+    device_token: "change-this-device-token"
+    poll_interval: "5s"
+
+wol:
+  # 推荐使用设备表；聊天里支持 /list、/on 1、/on NAS、/on all
+  devices:
+    - name: "设备1"
+      mac: "AA:BB:CC:DD:EE:FF"
+      ip: "192.168.1.100"
+      interface: ""        # 留空继承 wol.interface
+      broadcast_ip: ""     # 留空继承 wol.broadcast_ip
+      port: 0              # 0 继承 wol.port
+  # 目标 PC 的 MAC 地址，支持多台
+  # 旧版兼容字段；如果 devices 为空，会自动生成“设备1、设备2...”
+  mac_addresses:
+    - "AA:BB:CC:DD:EE:FF"
+  # 发送 Magic Packet 的 LAN 网口（ImmortalWrt/OpenWrt 通常为 br-lan）
+  interface: "br-lan"
+  # WoL UDP 目标端口（默认 9，也可用 7）
+  port: 9
+  # 广播地址（默认全网段广播；也可指定子网广播如 192.168.1.255）
+  broadcast_ip: "255.255.255.255"
+
+security:
+  # 允许触发开机的飞书用户 open_id（ou_ 前缀）
+  # 两个列表均为空时不限制，所有人皆可触发
+  allowed_open_ids:
+    - "ou_xxxxxxxxxxxxxxxxxxxxxxxx"
+  # 允许触发的群聊 chat_id（oc_ 前缀），私聊机器人可留空
+  allowed_chat_ids: []
+
+log:
+  # 日志级别：debug / info / warn / error
+  level: "info"
+  # 日志文件路径（留空则只输出到 stderr）
+  file: "/var/log/feishu-wol.log"

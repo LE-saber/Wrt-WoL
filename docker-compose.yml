@@ -1,0 +1,31 @@
+services:
+  wrt-wol:
+    build:
+      context: .
+      args:
+        VERSION: "1.0.0"
+    image: wrt-wol:latest
+    container_name: wrt-wol
+
+    # IMPORTANT: host network mode is required so that the UDP broadcast
+    # for Wake-on-LAN reaches the physical LAN interface.
+    # Bridge networking isolates the container and prevents the magic
+    # packet from being delivered to the LAN segment.
+    network_mode: host
+
+    restart: unless-stopped
+
+    volumes:
+      # Mount your config file (read-only).
+      - ./config.yaml:/etc/feishu-wol/config.yaml:ro
+      # Optional: persist logs on the host.
+      - ./logs:/var/log
+
+    # Pass config path explicitly (matches CMD default, shown for clarity).
+    command: ["-config", "/etc/feishu-wol/config.yaml"]
+
+    # Resource limits — keep it light on constrained routers.
+    deploy:
+      resources:
+        limits:
+          memory: 64M

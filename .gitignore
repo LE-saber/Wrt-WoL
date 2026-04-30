@@ -1,0 +1,7 @@
+/dist/
+*.log
+/config.yaml
+/.omc/
+/.codex
+/logs/
+/deprecated/old-releases/
