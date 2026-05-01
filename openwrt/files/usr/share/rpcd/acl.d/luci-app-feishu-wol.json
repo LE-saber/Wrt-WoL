@@ -1,0 +1,11 @@
+{
+	"luci-app-feishu-wol": {
+		"description": "Grant access to LuCI app Wrt-Wol",
+		"read": {
+			"uci": [ "feishu-wol" ]
+		},
+		"write": {
+			"uci": [ "feishu-wol" ]
+		}
+	}
+}

@@ -1,0 +1,48 @@
+<%
+local sys  = require "luci.sys"
+local disp = require "luci.dispatcher"
+local running = (sys.call("/etc/init.d/feishu-wol running >/dev/null 2>&1") == 0)
+local base = disp.build_url("admin/services/feishu-wol")
+%>
+<div class="cbi-section">
+  <div class="cbi-section-node">
+    <table class="cbi-section-table" style="width:100%">
+      <tr>
+        <td style="padding:8px 0; vertical-align:middle; width:50%">
+          <strong><%:服务状态%>：</strong>
+          <% if running then %>
+            <span style="color:#46a546;font-size:1.1em">&#9679;</span>
+            <strong style="color:#46a546"><%:运行中%></strong>
+          <% else %>
+            <span style="color:#9d261d;font-size:1.1em">&#9675;</span>
+            <strong style="color:#9d261d"><%:已停止%></strong>
+          <% end %>
+        </td>
+        <td style="padding:8px 0; text-align:right; vertical-align:middle">
+          <% if running then %>
+            <a href="<%=base%>/stop"
+               class="cbi-button cbi-button-reset"
+               onclick="return confirm('确定停止服务？')">
+              <%:停止%>
+            </a>
+            &nbsp;
+            <a href="<%=base%>/restart"
+               class="cbi-button cbi-button-apply">
+              <%:重启%>
+            </a>
+          <% else %>
+            <a href="<%=base%>/start"
+               class="cbi-button cbi-button-apply">
+              <%:启动%>
+            </a>
+            &nbsp;
+            <a href="<%=base%>/restart"
+               class="cbi-button cbi-button-apply">
+              <%:重启%>
+            </a>
+          <% end %>
+        </td>
+      </tr>
+    </table>
+  </div>
+</div>

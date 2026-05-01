@@ -1,0 +1,13 @@
+{
+	"admin/services/feishu-wol": {
+		"title": "Wrt-Wol",
+		"order": 60,
+		"action": {
+			"type": "cbi",
+			"path": "feishu_wol"
+		},
+		"depends": {
+			"acl": [ "luci-app-feishu-wol" ]
+		}
+	}
+}

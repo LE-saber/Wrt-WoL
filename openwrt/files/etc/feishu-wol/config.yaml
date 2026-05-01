@@ -1,0 +1,55 @@
+feishu:
+  # 飞书长连接入口。OpenWrt 标准安装默认通过 UCI/LuCI 写入环境变量，本文件主要作为独立运行模板。
+  enabled: false
+  app_id: "cli_your_app_id"
+  app_secret: "your_app_secret"
+
+telegram:
+  # Telegram Bot API 长轮询入口。
+  enabled: false
+  bot_token: "123456789:your_bot_token"
+  allowed_user_ids: []
+  allowed_chat_ids: []
+  proxy_url: ""
+  drop_pending_updates: true
+
+selfhost:
+  # 自建服务器端：部署在云服务器上，提供 Web 页面和中转 API。
+  server:
+    enabled: false
+    host: "0.0.0.0"
+    port: 8080
+    admin_token: "change-this-admin-token"
+    device_token: "change-this-device-token"
+  # OpenWrt 客户端：主动轮询自建服务器，收到指令后发 WoL。
+  client:
+    enabled: false
+    server_url: "https://wol.example.com"
+    device_token: "change-this-device-token"
+    poll_interval: "5s"
+
+wol:
+  # 推荐使用设备表；聊天里支持 /list、/on 1、/on NAS、/on all。
+  devices:
+    - name: "设备1"
+      mac: "AA:BB:CC:DD:EE:FF"
+      ip: "192.168.1.100"
+      interface: ""
+      broadcast_ip: ""
+      port: 0
+  # 旧版兼容字段；如果 devices 为空，会自动生成“设备1、设备2...”。
+  mac_addresses:
+    - "AA:BB:CC:DD:EE:FF"
+  interface: "br-lan"
+  port: 9
+  broadcast_ip: "255.255.255.255"
+
+security:
+  # 允许触发开机的飞书用户 open_id（ou_ 前缀）。留空则不限制。
+  allowed_open_ids: []
+  # 允许触发的飞书群聊 chat_id（oc_ 前缀）。留空则不限制。
+  allowed_chat_ids: []
+
+log:
+  level: "info"
+  file: "/tmp/feishu-wol.log"
