@@ -1,0 +1,11 @@
+selfhost:
+  server:
+    enabled: true
+    host: "0.0.0.0"
+    port: 8080
+    admin_token: "change-this-admin-token"
+    device_token: "change-this-device-token"
+
+log:
+  level: "info"
+  file: ""

@@ -1,0 +1,14 @@
+services:
+  wrt-wol-selfhost:
+    build:
+      context: ../..
+      args:
+        VERSION: "1.0.0"
+    image: wrt-wol:1.0.0-selfhost
+    container_name: wrt-wol-selfhost
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config.yaml:/etc/feishu-wol/config.yaml:ro
+    command: ["-config", "/etc/feishu-wol/config.yaml"]
