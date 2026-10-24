@@ -1,8 +1,12 @@
 # Wrt-Wol
 
+[English](../README.md) · [简体中文](README.zh.md) · [繁體中文](README.zh-TW.md) · [日本語](README.ja.md)
+
 Wrt-Wol is a lightweight Wake-on-LAN service for OpenWrt, ImmortalWrt, and Linux. It receives remote wake commands through Feishu, Telegram, or a self-hosted relay, then sends WoL magic packets inside the LAN.
 
 Current version: `1.0.0`
+
+[Download v1.0.0](https://github.com/LE-saber/Wrt-WoL/releases/tag/v1.0.0) · [Development guide](../开发文档.md) · [Relay deployment](../deploy/selfhost/README.md)
 
 ## Features
 
@@ -15,10 +19,12 @@ Current version: `1.0.0`
 
 ## OpenWrt Installation
 
+The published v1.0.0 asset is `Wrt-Wol_1.0.0_x86_64.ipk`. Download it from the release page and confirm that your router uses x86_64. Other architectures require a matching build. The target computer must support and enable Wake-on-LAN; sending a packet does not confirm that it powered on.
+
 ```bash
-scp dist/feishu-wol_1.0.0_x86_64.ipk root@<router-ip>:/tmp/feishu-wol.ipk
+scp Wrt-Wol_1.0.0_x86_64.ipk root@<router-ip>:/tmp/feishu-wol.ipk
 ssh root@<router-ip>
-opkg install /tmp/feishu-wol.ipk --force-checksum
+opkg install /tmp/feishu-wol.ipk
 rm -f /tmp/luci-indexcache
 rm -rf /tmp/luci-modulecache
 /etc/init.d/rpcd restart
@@ -27,7 +33,7 @@ rm -rf /tmp/luci-modulecache
 
 The project name is `Wrt-Wol`; the OpenWrt package, binary, UCI config, and init service currently remain `feishu-wol` for upgrade compatibility.
 
-## Configuration
+## OpenWrt Configuration
 
 After installation, open LuCI:
 
@@ -41,14 +47,88 @@ Configure one or more triggers:
 - Telegram: enable Telegram, set the BotFather token, and optionally restrict user or chat IDs.
 - Self-hosted relay: enable the client, set the server URL and shared device token.
 
-Then add wakeable devices in the device table. Each device should have at least a name and MAC address.
+Then add wakeable devices in the device table. Each device should have at least a name and MAC address. Configure the bot allowlists for the people or chats allowed to wake devices: empty allowlists allow all senders accepted by that bot. Bot responses and the relay UI currently use Chinese; the four documentation languages do not change application UI languages.
+
+## Self-Hosted Relay Deployment
+
+The self-hosted mode has two parts:
+
+1. A server deployed on your own VPS or home server.
+2. An OpenWrt client that polls the server and sends WoL packets inside the LAN.
+
+This mode does not require Feishu or Telegram, and OpenWrt does not need a public inbound port.
+
+### Server
+
+Deploy with Docker:
+
+```bash
+git clone https://github.com/LE-saber/Wrt-WoL.git
+cd Wrt-WoL/deploy/selfhost
+cp config.yaml.example config.yaml
+vi config.yaml
+docker compose up -d --build
+```
+
+Minimal server config:
+
+```yaml
+selfhost:
+  server:
+    enabled: true
+    host: "0.0.0.0"
+    port: 8080
+    admin_token: "change-this-admin-token"
+    device_token: "change-this-device-token"
+```
+
+Open the web page:
+
+```text
+http://<server-ip>:8080/
+```
+
+For production, put the service behind HTTPS with Nginx or Caddy.
+
+### OpenWrt Client
+
+In LuCI, open:
+
+```text
+Services → Wrt-Wol → Self-hosted Service
+```
+
+Set:
+
+- Enable self-hosted client: `on`
+- Server URL: `https://wol.example.com`
+- Device token: same as `selfhost.server.device_token`
+- Poll interval: `5s`
+
+Save, apply, then restart the service.
+
+### HTTP API
+
+Trigger wake from your own scripts:
+
+```bash
+curl -X POST https://wol.example.com/api/wake \
+  -H "Authorization: Bearer <admin_token>" \
+  -d "target=all"
+```
+
+`target` can be:
+
+- `all`
+- device index, for example `1`
+- device name, for example `NAS`
 
 ## Chat Commands
 
 ```text
 /help          Show help
 /list          List configured devices
-/on            Wake the default device
+/on            Wake all devices
 /on 1          Wake device #1
 /on NAS        Wake the device named NAS
 /on all        Wake all devices
@@ -56,24 +136,9 @@ Then add wakeable devices in the device table. Each device should have at least 
 /whoami        Show sender identity
 ```
 
-## Self-Hosted Relay
-
-```bash
-cd deploy/selfhost
-cp config.yaml.example config.yaml
-vi config.yaml
-docker compose up -d --build
-```
-
-Open:
-
-```text
-http://<server-ip>:8080/
-```
-
-For production, place the service behind HTTPS with Nginx or Caddy.
-
 ## Build
+
+Requires Go 1.26 (as declared in [go.mod](../go.mod)), Make, and Python 3 for packaging. Run native package builds on a matching Linux host; `make ipk` uses the host architecture. Cross-compilation targets are documented in the [Makefile](../Makefile).
 
 ```bash
 make build
@@ -89,6 +154,31 @@ CGO_ENABLED=0 /usr/local/go/bin/go build -trimpath \
 VERSION=1.0.0 ARCH=x86_64 BINARY=dist/feishu-wol OUTDIR=dist python3 scripts/build-ipk.py
 ```
 
+## Troubleshooting
+
+If LuCI does not show the page:
+
+```bash
+opkg install luci-compat
+rm -f /tmp/luci-indexcache
+rm -rf /tmp/luci-modulecache
+/etc/init.d/rpcd restart
+/etc/init.d/uhttpd restart
+```
+
+If the service status is wrong:
+
+```bash
+/etc/init.d/feishu-wol running
+ubus call service list '{"name":"feishu-wol"}'
+logread | grep -i feishu
+cat /tmp/feishu-wol.log
+```
+
 ## License
 
-MIT License. See `LICENSE`.
+MIT License. See [LICENSE](../LICENSE).
+
+## Documentation
+
+The [development guide](../开发文档.md) covers configuration and extension details. Older instructions remain in [deprecated/old-docs](../deprecated/old-docs/); use the current release instructions above for v1.0.0. The relay keeps the latest command and report in memory; it is not a durable job queue.
