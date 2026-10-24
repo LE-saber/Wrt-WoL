@@ -1,15 +1,12 @@
 # Wrt-Wol
 
+[English](README.md) · [简体中文](docs/README.zh.md) · [繁體中文](docs/README.zh-TW.md) · [日本語](docs/README.ja.md)
+
 Wrt-Wol is a lightweight Wake-on-LAN service for OpenWrt, ImmortalWrt, and Linux. It receives remote wake commands through Feishu, Telegram, or a self-hosted relay, then sends WoL magic packets inside the LAN.
 
 Current version: `1.0.0`
 
-## Languages
-
-- English: `README.md`
-- 中文：`docs/README.zh.md`
-- 日本語: `docs/README.ja.md`
-- Development document: `开发文档.md`
+[Download v1.0.0](https://github.com/LE-saber/Wrt-WoL/releases/tag/v1.0.0) · [Development guide](开发文档.md) · [Relay deployment](deploy/selfhost/README.md)
 
 ## Features
 
@@ -22,12 +19,12 @@ Current version: `1.0.0`
 
 ## OpenWrt Installation
 
-Download the `.ipk` package from the GitHub Release page. If GitHub only provides the ZIP asset, extract the `.ipk` first.
+The published v1.0.0 asset is `Wrt-Wol_1.0.0_x86_64.ipk`. Download it from the release page and confirm that your router uses x86_64. Other architectures require a matching build. The target computer must support and enable Wake-on-LAN; sending a packet does not confirm that it powered on.
 
 ```bash
-scp feishu-wol_1.0.0_x86_64.ipk root@<router-ip>:/tmp/feishu-wol.ipk
+scp Wrt-Wol_1.0.0_x86_64.ipk root@<router-ip>:/tmp/feishu-wol.ipk
 ssh root@<router-ip>
-opkg install /tmp/feishu-wol.ipk --force-checksum
+opkg install /tmp/feishu-wol.ipk
 rm -f /tmp/luci-indexcache
 rm -rf /tmp/luci-modulecache
 /etc/init.d/rpcd restart
@@ -50,7 +47,7 @@ Configure one or more triggers:
 - Telegram: enable Telegram, set the BotFather token, and optionally restrict user or chat IDs.
 - Self-hosted relay: enable the client, set the server URL and shared device token.
 
-Then add wakeable devices in the device table. Each device should have at least a name and MAC address.
+Then add wakeable devices in the device table. Each device should have at least a name and MAC address. Configure the bot allowlists for the people or chats allowed to wake devices: empty allowlists allow all senders accepted by that bot. Bot responses and the relay UI currently use Chinese; the four documentation languages do not change application UI languages.
 
 ## Self-Hosted Relay Deployment
 
@@ -141,6 +138,8 @@ curl -X POST https://wol.example.com/api/wake \
 
 ## Build
 
+Requires Go 1.26 (as declared in [go.mod](go.mod)), Make, and Python 3 for packaging. Run native package builds on a matching Linux host; `make ipk` uses the host architecture. Cross-compilation targets are documented in the [Makefile](Makefile).
+
 ```bash
 make build
 make ipk
@@ -178,4 +177,8 @@ cat /tmp/feishu-wol.log
 
 ## License
 
-MIT License. See `LICENSE`.
+MIT License. See [LICENSE](LICENSE).
+
+## Documentation
+
+The [development guide](开发文档.md) covers configuration and extension details. Older instructions remain in [deprecated/old-docs](deprecated/old-docs/); use the current release instructions above for v1.0.0. The relay keeps the latest command and report in memory; it is not a durable job queue.

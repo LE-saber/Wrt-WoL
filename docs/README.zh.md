@@ -1,5 +1,7 @@
 # Wrt-Wol
 
+[English](../README.md) · [简体中文](README.zh.md) · [繁體中文](README.zh-TW.md) · [日本語](README.ja.md)
+
 Wrt-Wol 是一个运行在 OpenWrt/ImmortalWrt 或普通 Linux 服务器上的 Wake-on-LAN 服务。它可以通过飞书、Telegram 或自建 Web 中转服务接收远程开机指令，并在局域网内发送 WoL Magic Packet。
 
 当前版本：`1.0.0`
@@ -15,12 +17,12 @@ Wrt-Wol 是一个运行在 OpenWrt/ImmortalWrt 或普通 Linux 服务器上的 W
 
 ## 快速安装 OpenWrt 包
 
-从 GitHub Release 下载 `.ipk`。如果 Release 只提供 ZIP 附件，先解压出 `.ipk`。
+从 [v1.0.0 Release](https://github.com/LE-saber/Wrt-WoL/releases/tag/v1.0.0) 下载 `Wrt-Wol_1.0.0_x86_64.ipk`，确认路由器架构为 x86_64；其他架构需自行构建匹配版本。目标电脑需要支持并启用 Wake-on-LAN，成功发送数据包不代表电脑已经启动。
 
 ```bash
-scp feishu-wol_1.0.0_x86_64.ipk root@<路由器IP>:/tmp/feishu-wol.ipk
+scp Wrt-Wol_1.0.0_x86_64.ipk root@<路由器IP>:/tmp/feishu-wol.ipk
 ssh root@<路由器IP>
-opkg install /tmp/feishu-wol.ipk --force-checksum
+opkg install /tmp/feishu-wol.ipk
 rm -f /tmp/luci-indexcache
 rm -rf /tmp/luci-modulecache
 /etc/init.d/rpcd restart
@@ -34,6 +36,25 @@ rm -rf /tmp/luci-modulecache
 ```
 
 说明：项目名称为 `Wrt-Wol`；OpenWrt 包名、二进制名、UCI 配置名和 init 服务名当前仍保留 `feishu-wol`，用于兼容已安装用户和升级路径。
+
+## 触发器配置与命令
+
+- 飞书：填写 App ID / App Secret，启用长连接并订阅 `im.message.receive_v1`。
+- Telegram：填写 BotFather Token，配置允许的用户或会话 ID。
+- 自建中继：配置服务器 URL 与共享设备 Token。
+- 设备表至少填写名称与 MAC；按实际网络填写接口、广播地址、端口及可选 IP。
+
+请配置机器人允许列表；空列表意味着允许该机器人收到的所有发送者。机器人回复及中继页面当前使用中文，文档提供四种语言并不代表程序界面支持四种语言。
+
+| 命令 | 用途 |
+| --- | --- |
+| `/help` | 显示帮助 |
+| `/list` | 列出设备 |
+| `/on`、`/on all` | 唤醒全部设备 |
+| `/on 1` | 唤醒第 1 台设备 |
+| `/on NAS` | 按名称选择设备 |
+| `/last` | 查看最近一次唤醒记录 |
+| `/whoami` | 查看当前发送者/会话 ID |
 
 ## 自建服务器部署
 
@@ -103,6 +124,8 @@ curl -X POST https://wol.example.com/api/wake \
 
 ## 构建
 
+需要 [go.mod](../go.mod) 声明的 Go 1.26、Make，以及打包所需的 Python 3。原生包请在架构匹配的 Linux 主机上构建；`make ipk` 采用主机架构，交叉编译目标见 [Makefile](../Makefile)。
+
 ```bash
 make build
 make ipk
@@ -117,26 +140,31 @@ CGO_ENABLED=0 /usr/local/go/bin/go build -trimpath \
 VERSION=1.0.0 ARCH=x86_64 BINARY=dist/feishu-wol OUTDIR=dist python3 scripts/build-ipk.py
 ```
 
-## 文档
+## 排障
 
-完整开发、部署、配置和扩展说明见：
+LuCI 页面没有出现时，确认安装 `luci-compat`，清理 LuCI 缓存并重启服务：
 
-```text
-开发文档.md
+```sh
+opkg install luci-compat
+rm -f /tmp/luci-indexcache
+rm -rf /tmp/luci-modulecache
+/etc/init.d/rpcd restart
+/etc/init.d/uhttpd restart
 ```
 
-多语言说明：
+查看运行状态与日志：
 
-- English：`README.md`
-- 中文：`docs/README.zh.md`
-- 日本語：`docs/README.ja.md`
-
-旧版安装包和旧文档已归档到：
-
-```text
-deprecated/
+```sh
+/etc/init.d/feishu-wol running
+ubus call service list '{"name":"feishu-wol"}'
+logread | grep -i feishu
+cat /tmp/feishu-wol.log
 ```
 
-## License
+## 文档与许可
 
-MIT License. See `LICENSE`.
+[开发文档](../开发文档.md) · [自建服务指南](../deploy/selfhost/README.md) · [历史文档](../deprecated/old-docs/)
+
+中继在内存中保存最新指令与回报，不是持久化任务队列。
+
+MIT 许可证，详见 [LICENSE](../LICENSE)。
